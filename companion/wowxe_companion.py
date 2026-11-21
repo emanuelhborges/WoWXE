@@ -878,6 +878,7 @@ class Tracker:
         with self.lock:
             snap = dict(self.state)
         snap["monitor"] = self.monitor
+        snap.setdefault("versions", {"companion": VERSION, "addon": self.addon_version})   # also while WoW is not found
         return snap
 
 
