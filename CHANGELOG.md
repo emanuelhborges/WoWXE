@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+- Launcher: a **Play** button starts the companion and launches WoW Forever through Battle.net (`--exec="launch WoWF"`).
+  Battle.net is found from the registry or the usual folders; if not, the launcher asks once and remembers it.
+- Launcher: optional **Stop the companion when WoW closes** (one window check every ~3 s, after 10 s without WoW).
+- Launcher: removed the Quit button (closing the window does the same).
+- Widget: tries to let horizontal swipes through to iCUE so you can switch widgets.
+
 ## 1.3.0
 - First public release.
 - `WoWXE.exe`: no Python install needed. Releases are built and tested automatically on GitHub.

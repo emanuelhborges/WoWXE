@@ -8,11 +8,12 @@ import os
 import subprocess
 import sys
 import threading
+import time
 import urllib.request
 from collections import deque
 from pathlib import Path
 
-LAUNCHER_VERSION = "1.3.0"   # release number shared by addon, companion, widget and launcher
+LAUNCHER_VERSION = "1.4.0"   # release number shared by addon, companion, widget and launcher
 FROZEN = bool(getattr(sys, "frozen", False))      # running as WoWXE.exe (PyInstaller)
 HERE = Path(sys.executable).resolve().parent if FROZEN else Path(__file__).resolve().parent
 CACHE_DIR = HERE / "cache" if FROZEN else HERE / "companion" / "cache"
@@ -31,6 +32,9 @@ DEFAULTS = {
     "tray": "1",                # minimizing hides the window to the tray
     "autostart": "0",           # start the companion as soon as the launcher opens
     "show_log": "0",
+    "bnet": "",                 # Battle.net Launcher.exe (found automatically when empty)
+    "game_code": "WoWF",        # Battle.net code of the game: WoWF = WoW Forever (WoW = retail, WoWC = Classic)
+    "stop_with_game": "1",      # stop the companion when the WoW window closes
 }
 
 
@@ -148,6 +152,90 @@ def install_addon(game_dir, src=ADDON_SRC):
         shutil.rmtree(target)
     shutil.copytree(src, target)
     return target
+
+
+# ------------------------------------------------------------------ Battle.net / the game
+BNET_NAMES = ("Battle.net Launcher.exe", "Battle.net.exe")
+
+
+def _bnet_dirs_from_registry():
+    if sys.platform != "win32":
+        return []
+    import winreg
+    out = []
+    keys = [(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net", "InstallLocation"),
+            (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Battle.net", "InstallLocation"),
+            (winreg.HKEY_CLASSES_ROOT, r"battlenet\shell\open\command", "")]
+    for hive, key, name in keys:
+        try:
+            with winreg.OpenKey(hive, key) as k:
+                value = str(winreg.QueryValueEx(k, name)[0])
+        except OSError:
+            continue
+        if value.startswith('"'):
+            value = value[1:].split('"', 1)[0]           # "C:\...\Battle.net.exe" "%1"
+        p = Path(value)
+        out.append(p.parent if p.suffix.lower() == ".exe" else p)
+    return out
+
+
+def find_battlenet(cfg=None, extra_dirs=()):
+    """Path of the Battle.net launcher: the configured one, then the registry, then the usual folders."""
+    if cfg and str(cfg.get("bnet", "")).strip():
+        p = Path(str(cfg["bnet"]).strip().strip('"'))
+        if p.is_file():
+            return p
+    dirs = list(extra_dirs) + _bnet_dirs_from_registry()
+    for env in ("ProgramFiles(x86)", "ProgramFiles"):
+        if os.environ.get(env):
+            dirs.append(Path(os.environ[env]) / "Battle.net")
+    for d in dirs:
+        for name in BNET_NAMES:
+            if (Path(d) / name).is_file():
+                return Path(d) / name
+    return None
+
+
+def launch_args(exe, code):
+    return [str(exe), f"--exec=launch {code or 'WoWF'}"]
+
+
+def launch_game(exe, code):
+    flags = getattr(subprocess, "DETACHED_PROCESS", 0) if sys.platform == "win32" else 0
+    subprocess.Popen(launch_args(exe, code), close_fds=True, creationflags=flags)
+
+
+def wow_window_open():
+    """True/False whether a WoW game window exists (Windows only; None elsewhere). Costs a single window lookup."""
+    if sys.platform != "win32":
+        return None
+    import ctypes
+    user32 = ctypes.windll.user32
+    return bool(user32.FindWindowW("waApplication Window", None) or user32.FindWindowW(None, "World of Warcraft"))
+
+
+class GameWatch:
+    """Says when to stop the companion: WoW was seen running and its window has been gone for GRACE seconds."""
+    GRACE = 10.0
+
+    def __init__(self):
+        self.seen = False
+        self.gone_since = None
+
+    def update(self, open_now, now=None):
+        now = time.time() if now is None else now
+        if open_now:
+            self.seen, self.gone_since = True, None
+            return False
+        if not self.seen:
+            return False
+        if self.gone_since is None:
+            self.gone_since = now
+            return False
+        if now - self.gone_since >= self.GRACE:
+            self.seen, self.gone_since = False, None
+            return True
+        return False
 
 
 # ------------------------------------------------------------------ companion process

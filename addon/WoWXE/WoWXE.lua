@@ -61,7 +61,7 @@ Flags (bit 0 = 1)
 local CELL = 3   -- pixels per cell: keep in step with the companion. 3 (not 2) so the middle pixel
                  -- still lands inside the right cell if the game snaps edges by one pixel
 local PROTOCOL = 3
-local VERSION = "1.3.0"   -- release number shared by addon, companion and widget
+local VERSION = "1.4.0"   -- release number shared by addon, companion and widget
 local BAR_W = 256   -- how wide the bar fill is; the companion reads values the game hides from it
 local BAG_CELLS = 64
 local ZONE_CELLS = 12

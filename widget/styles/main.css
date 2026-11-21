@@ -210,3 +210,6 @@ body[data-view="gear"] #pack { display: none; }
 .gslot.q-3 { border-color: #0070dd; } .gslot.q-4 { border-color: #a335ee; } .gslot.q-5 { border-color: #ff8000; }
 .gslot.q-6, .gslot.q-7 { border-color: #e6cc80; }
 .gslot.sel, .slot.sel { box-shadow: 0 0 0 2px #fff inset; }
+
+/* Let horizontal swipes go to iCUE (switching widgets) while taps still reach the widget. */
+html, body { touch-action: pan-x; }

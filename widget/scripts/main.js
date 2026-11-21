@@ -8,7 +8,7 @@ icueEvents = {
 // permission in manifest.json.
 const FEED_URL = "http://127.0.0.1:8765/state.json";
 const POLL_MS = 250;
-const WIDGET_VERSION = "1.3.0"; // release number shared by addon, companion and widget
+const WIDGET_VERSION = "1.4.0"; // release number shared by addon, companion and widget
 const BASE_URL = FEED_URL.replace(/\/state\.json$/, "");
 const CLASS_COLORS = {
 	1: "#C69B6D", 2: "#F48CBA", 3: "#AAD372", 4: "#FFF468", 5: "#FFFFFF", 6: "#C41E3A", 7: "#0070DD",

@@ -40,7 +40,8 @@ When WoW isn't running, the screen shows a stand-by picture:
   The backpack is replaced by your equipment, laid out like the character window, with tooltips.
 - **Professions tab:** primary and secondary professions with icons and skill bars.
 - **Stand-by screen** when WoW isn't running, and a small **!** button on the map for any messages.
-- **Launcher** with Start/Stop, automatic WoW folder and monitor detection, one-click addon install/update, and minimize to tray.
+- **Launcher** with Play (launches WoW through Battle.net), Start/Stop, automatic WoW folder and monitor detection,
+  one-click addon install/update, and minimize to tray.
 - **Display only.** WoWXE never sends input to the game and never reads game memory.
 
 ## Requirements
@@ -56,9 +57,9 @@ When WoW isn't running, the screen shows a stand-by picture:
 2. Run **`WoWXE.exe`**.
    - It finds your WoW folder (`...\World of Warcraft\_forever_`). If it doesn't, click **Browse...**.
    - It offers to **install the WoWXE addon**. Click **Yes**.
-   - Click **Start**.
+   - Click **Play** to launch WoW Forever, or **Start** if the game is already running.
 3. In iCUE, import **`WoWXE.icuewidget`** (in the same folder) and add it to the Xeneon Edge at size **XL**.
-4. Start WoW (or type `/reload` if it was already running).
+4. In WoW, type `/reload` if it was already running when you installed the addon.
 
 Windows SmartScreen may warn about an unknown publisher the first time you run `WoWXE.exe`, because the app isn't code-signed.
 Click **More info → Run anyway**, or run it from source (below).
@@ -74,7 +75,9 @@ It turns amber if they don't match.
 - **Tabs:** Info, Gear and Professions at the bottom of the first column. The widget remembers the last one.
 - **Tooltips:** tap any backpack or equipment slot; tap again (or anywhere else) to close.
   A new item's tooltip can take up to ~30 seconds to arrive the first time; after that it's cached.
-- **Launcher:** minimize → hides to the tray (Open / Start / Stop / Quit). Closing the window stops everything.
+- **Launcher:** **Play** starts the companion and launches WoW Forever through Battle.net.
+  Minimizing hides it to the tray (Open / Start / Stop / Quit). Closing the window stops everything.
+  With **Stop the companion when WoW closes** on, it also stops by itself shortly after you exit the game.
 - **In game:** `/wowxe ver` shows the addon version. `/wowxe hide` and `/wowxe show` hide or show the strip.
   `/wowxe test` lists the values the game hides from addons.
 

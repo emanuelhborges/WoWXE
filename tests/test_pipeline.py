@@ -751,6 +751,28 @@ def launcher_config_and_folder_checks():
 
 
 @case
+def launcher_finds_battlenet_and_watches_the_game():
+    core = _launcher_core()
+    with tempfile.TemporaryDirectory() as d:
+        d = pathlib.Path(d)
+        bnet = d / "Games" / "Battle.net"
+        bnet.mkdir(parents=True)
+        (bnet / "Battle.net Launcher.exe").write_bytes(b"MZ")
+        assert core.find_battlenet({"bnet": ""}, extra_dirs=[d / "nothing", bnet]) == bnet / "Battle.net Launcher.exe"
+        assert core.find_battlenet({"bnet": str(bnet / "Battle.net Launcher.exe")}) == bnet / "Battle.net Launcher.exe"
+    assert core.launch_args("B.exe", "WoWF") == ["B.exe", "--exec=launch WoWF"]
+    assert core.DEFAULTS["game_code"] == "WoWF"
+    w = core.GameWatch()
+    assert not w.update(False, 0)                      # never seen: nothing to do
+    assert not w.update(True, 1)                       # game running
+    assert not w.update(False, 2) and not w.update(False, 5)   # closed briefly (e.g. restarting)
+    assert not w.update(True, 6)                       # back
+    assert not w.update(False, 7)
+    assert w.update(False, 17.5)                       # gone for 10 s: stop the companion
+    assert not w.update(False, 30)                     # only once
+
+
+@case
 def launcher_installs_and_checks_the_addon():
     core = _launcher_core()
     assert (core.ADDON_SRC / "WoWXE.toc").exists() and (core.ADDON_SRC / "WoWXE.lua").exists()

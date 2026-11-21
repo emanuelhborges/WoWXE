@@ -1,7 +1,8 @@
 """
 WoWXE launcher: a small window that starts/stops the companion in the background.
 Settings are saved in config.ini next to this file. Minimizing hides the window to the tray
-(if pystray is installed and "Minimize to tray" is on); closing it or Quit stops the companion.
+(if pystray is installed and "Minimize to tray" is on); closing it stops the companion.
+Play starts the companion and launches WoW through Battle.net.
 """
 import atexit
 import sys
@@ -47,6 +48,8 @@ class Launcher(tk.Tk):
         self.cfg = core.load_config()
         self.comp = core.Companion()
         self.poller = core.StatusPoller(lambda: self.cfg["port"])
+        self.watch = core.GameWatch()
+        self._watch_n = 0
         self.poller.start()
         atexit.register(self.comp.stop)       # never leave the companion running behind a crashed launcher
         self.tray = None
@@ -100,12 +103,16 @@ class Launcher(tk.Tk):
         ttk.Checkbutton(opts, text=tray_text, variable=self.var_tray).grid(row=0, column=1, sticky="w", padx=(24, 0))
         ttk.Checkbutton(opts, text="Start the companion when this opens", variable=self.var_auto).grid(
             row=1, column=1, sticky="w", padx=(24, 0))
+        self.var_stopgame = tk.BooleanVar(value=core.flag(self.cfg, "stop_with_game"))
+        ttk.Checkbutton(opts, text="Stop the companion when WoW closes", variable=self.var_stopgame).grid(
+            row=2, column=1, sticky="w", padx=(24, 0))
 
         bar = ttk.Frame(frm)
         bar.grid(row=5, column=0, columnspan=3, sticky="we", padx=10, pady=(12, 4))
         self.btn = ttk.Button(bar, text="Start", width=14, command=self.toggle)
         self.btn.pack(side="left")
-        ttk.Button(bar, text="Quit", width=8, command=self.quit_app).pack(side="right")
+        self.btn_play = ttk.Button(bar, text="Play", width=10, command=self.play)
+        self.btn_play.pack(side="right")
         self.dot = tk.Canvas(bar, width=16, height=16, highlightthickness=0)
         self.dot.pack(side="left", padx=(14, 6))
         self.dot_id = self.dot.create_oval(2, 2, 14, 14, fill=COLORS["idle"], outline="")
@@ -177,7 +184,8 @@ class Launcher(tk.Tk):
         self.cfg.update(game_dir=self.var_dir.get().strip().strip('"'), monitor=mon.lower() if mon.isdigit() else "auto",
                         web_icons="1" if self.var_icons.get() else "0", wiki_maps="1" if self.var_maps.get() else "0",
                         tray="1" if self.var_tray.get() else "0", autostart="1" if self.var_auto.get() else "0",
-                        show_log="1" if self.var_log.get() else "0")
+                        show_log="1" if self.var_log.get() else "0",
+                        stop_with_game="1" if self.var_stopgame.get() else "0")
         core.save_config(self.cfg)
 
     # ---------------------------------------------------------- companion
@@ -203,6 +211,27 @@ class Launcher(tk.Tk):
     def stop(self):
         self.comp.stop()
 
+    def play(self):
+        """Start the companion (if needed) and launch WoW through Battle.net."""
+        self.collect()
+        exe = core.find_battlenet(self.cfg)
+        if exe is None:
+            path = filedialog.askopenfilename(title="Where is Battle.net Launcher.exe?",
+                                              filetypes=[("Battle.net launcher", "Battle.net*.exe"), ("Programs", "*.exe")])
+            if not path:
+                return
+            self.cfg["bnet"] = path
+            core.save_config(self.cfg)
+            exe = core.find_battlenet(self.cfg)
+            if exe is None:
+                return
+        if not self.comp.running():
+            self.start()
+        try:
+            core.launch_game(exe, self.cfg.get("game_code") or "WoWF")
+        except OSError as e:
+            messagebox.showerror("WoWXE", f"Could not start Battle.net:\n{e}")
+
     # ---------------------------------------------------------- refresh
     def tick(self):
         running = self.comp.running()
@@ -220,6 +249,10 @@ class Launcher(tk.Tk):
                 self.log.insert("end", text)
                 self.log.see("end")
                 self.log.config(state="disabled")
+        self._watch_n += 1
+        if running and self.var_stopgame.get() and self._watch_n % 4 == 0:   # one window lookup every ~3 s
+            if self.watch.update(core.wow_window_open()):
+                self.stop()
         if self.tray is not None and level != self.tray_level:
             self.tray_level = level
             self.tray.icon = tray_image(level)
