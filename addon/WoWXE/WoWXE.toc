@@ -1,0 +1,9 @@
+## Interface: 16001, 120100, 120005
+## Title: WoWXE
+## Notes: Draws a small pixel strip with your character's status so a companion app can show it on a second screen (display only).
+## Author: maX
+## Version: 1.3.0
+## SavedVariables: WoWXEDB
+## IconTexture: Interface\Icons\INV_Misc_Gear_01
+
+WoWXE.lua

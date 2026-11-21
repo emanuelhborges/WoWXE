@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>WoWXE</title>
+		<link rel="icon" type="image/svg+xml" href="resources/icon.svg" />
+
+		<meta
+			name="x-icue-property"
+			content="accentColor"
+			data-label="Map accent color"
+			data-type="color"
+			data-default="'#e74c3c'"
+		/>
+
+		<script type="application/json" id="x-icue-groups">
+			[{ "title": "Settings", "properties": ["accentColor"] }]
+		</script>
+	</head>
+	<body>
+		<link rel="stylesheet" href="styles/main.css" />
+		<div id="hud">
+			<section class="panel" id="bars">
+				<div id="ident"><img id="faction" alt="" /><span id="cname">&nbsp;</span><span id="crace"></span><span id="cclass"></span><span id="clevel"></span></div>
+				<div class="view" id="view-info">
+					<div class="bar" id="health"><div class="track"><div class="fill"></div></div><div class="label"><small>HEALTH</small><span class="mid">—</span><span class="pct">0%</span></div></div>
+					<div class="bar" id="mana"><div class="track"><div class="fill"></div></div><div class="label"><small>MANA</small><span class="mid">—</span><span class="pct">0%</span></div></div>
+					<div class="bar" id="xp"><div class="track"><div class="fill"></div></div><div class="label"><small>XP</small><span class="mid">—</span><span class="pct">0%</span></div></div>
+				</div>
+				<div class="view" id="view-gear"><div id="stats"></div></div>
+				<div class="view" id="view-prof"><div id="profs"></div></div>
+				<nav id="tabs">
+					<button type="button" data-view="info">Info</button>
+					<button type="button" data-view="gear">Gear</button>
+					<button type="button" data-view="prof">Professions</button>
+				</nav>
+			</section>
+
+			<section class="panel">
+				<h2 id="maptitle">Map</h2>
+				<div id="mapwrap">
+					<canvas id="map"></canvas>
+						<button id="errbtn" type="button" title="Show messages">!</button>
+					<div id="arthint"></div>
+				</div>
+			</section>
+
+			<section class="panel" id="col3">
+				<div id="pack">
+					<h2>Backpack</h2>
+					<div id="slots"></div>
+					<div id="bagfree"></div>
+				</div>
+				<div id="paper">
+					<h2>Equipment</h2>
+					<div id="doll">
+						<div class="dcol" id="dleft"></div>
+						<div id="dcenter"><img id="dfaction" alt="" /><div id="dname"></div><div id="dsub"></div><div id="dilvl"></div></div>
+						<div class="dcol" id="dright"></div>
+						<div id="dweap"></div>
+					</div>
+				</div>
+			</section>
+		</div>
+
+		<div id="status"></div>
+		<div id="tip"></div>
+		<div id="ver"></div>
+		<div id="standby"><img src="resources/standby.jpg" alt="" /></div>
+		<script src="scripts/main.js"></script>
+	</body>
+</html>

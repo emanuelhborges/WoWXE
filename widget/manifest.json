@@ -1,0 +1,28 @@
+{
+	"author": "maX",
+	"id": "com.maxnju.wowxe",
+	"name": "WoWXE",
+	"description": "WoWXE - World of Warcraft Forever second-screen: health, mana, XP, map and backpack",
+	"version": "1.3.0",
+	"interactive": true,
+	"preview_icon": "resources/icon.svg",
+	"min_app_version": "5.47",
+	"min_framework_version": "1.0.0",
+	"os": [
+		{
+			"platform": "windows"
+		}
+	],
+	"supported_devices": [
+		{
+			"type": "dashboard_lcd"
+		}
+	],
+	"permissions": [
+		{
+			"type": "url",
+			"domain": "127.0.0.1",
+			"port": 8765
+		}
+	]
+}
