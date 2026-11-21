@@ -23,6 +23,14 @@ sys.path.insert(0, str(ROOT / "companion"))
 sys.path.insert(0, str(ROOT / "tests"))
 import wowxe_companion as comp  # noqa: E402
 
+
+def _img(path):
+    """Open a picture without keeping the file open (Windows can't delete open files)."""
+    from PIL import Image
+    with Image.open(path) as im:
+        im.load()
+        return im.copy()
+
 PHYS_W, PHYS_H = 2560, 1440
 CANVAS_W, CANVAS_H = 900, 660
 
@@ -340,14 +348,14 @@ def captures_save_map_and_icons():
         assert snap["capture"]["kind"] == 0  # nothing flashing once done
         assert snap["map"]["id"] == 37 and snap["map"]["ready"] and snap["map"]["ver"] > 0, snap["map"]
         assert [i["ready"] for i in snap["bag"]["items"][:3]] == [True, True, False]
-        m = Image.open(pathlib.Path(tmp) / "maps" / "37.png")
+        m = _img(pathlib.Path(tmp) / "maps" / "37.png")
         assert m.size == (804, 536), m.size  # 1002x668 scaled to fit 804x536
         arr = np.asarray(m.convert("RGB"))
         assert tuple(arr[10, 10]) == file_color(1001) and tuple(arr[500, 700]) == file_color(1012), (arr[10, 10], arr[500, 700])
         # explored-area overlay sits on top of the base map at its offset (scaled by 804/1002)
         assert tuple(arr[60, 100]) == file_color(5001), arr[60, 100]
         assert tuple(arr[300, 400]) != file_color(5001)
-        ic = np.asarray(Image.open(pathlib.Path(tmp) / "icons" / "2001.png").convert("RGB"))
+        ic = np.asarray(_img(pathlib.Path(tmp) / "icons" / "2001.png").convert("RGB"))
         assert ic.shape[:2] == (64, 64) and tuple(ic[30, 30]) == file_color(2001)
         # a second run with a warm cache flashes nothing new from the companion's point of view
         again = comp.Captures(tmp)
@@ -442,12 +450,12 @@ def map_and_icons_without_flashing():
         assert kinds == {0}, kinds                  # nothing was ever drawn on screen
         snap = tracker.snapshot()
         assert snap["art_source"] == "ready" and snap["map"]["ver"] != 0
-        m = np.asarray(Image.open(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
+        m = np.asarray(_img(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
         assert m.shape[:2] == (668, 1002), m.shape
         assert tuple(m[10, 10]) == file_color(1001) and tuple(m[600, 800]) == file_color(1012)
         assert tuple(m[60, 110]) == (250, 10, 10), m[60, 110]       # explored overlay at offset (100, 50)
         assert tuple(m[300, 600]) != (250, 10, 10)
-        ic = Image.open(pathlib.Path(cache) / "icons" / "2001.png")
+        ic = _img(pathlib.Path(cache) / "icons" / "2001.png")
         assert ic.size == (56, 56) and ic.convert("RGB").getpixel((5, 5)) == (10, 250, 10)
 
 
@@ -473,7 +481,7 @@ def map_with_missing_pictures_is_partial_not_failed():
             time.sleep(0.01)
         snap = tracker.snapshot()
         assert snap["map"]["ready"] and "pictures are not on this PC" in snap["art"]["warning"], snap["art"]
-        m = np.asarray(Image.open(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
+        m = np.asarray(_img(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
         assert tuple(m[10, 10]) == file_color(1001) and tuple(m[10, 300]) == (0, 0, 0)  # blank where missing
 
 
@@ -530,7 +538,7 @@ def manual_map_capture_beats_incomplete_game_files():
         for _ in range(5):
             f.scripts["OnUpdate"](f, 0.2)
             tracker.update(render(lua))
-        im = Image.open(pathlib.Path(cache) / "maps" / "37.png")
+        im = _img(pathlib.Path(cache) / "maps" / "37.png")
         assert im.size == (804, 536), im.size           # the complete on-screen capture is kept
 
 
@@ -558,7 +566,7 @@ def complete_zone_map_from_wiki():
             time.sleep(0.01)
         assert 2022 in captures.fixed_maps, asked
         assert any("Elwynn_c60" in u for u in asked) is False   # table has no entry for 2022: name-based candidates only
-        im = Image.open(pathlib.Path(cache) / "maps" / "2022.png")
+        im = _img(pathlib.Path(cache) / "maps" / "2022.png")
         assert im.size == (1002, 668), im.size              # 1024x768 grid cropped to the game's map area
         assert comp.Captures(cache).fixed_maps == {2022}    # remembered next time
         n = len(asked)
@@ -933,7 +941,7 @@ def exploration_update_resends_map():
         lua.execute("""WORLD.explored[37][2] = { textureWidth = 256, textureHeight = 256, offsetX = 600, offsetY = 300, fileDataIDs = { 5002 } }""")
         f.scripts["OnEvent"](f, "MAP_EXPLORATION_UPDATED")
         pump(lambda s: s["map"]["ver"] != v1)
-        m = np.asarray(Image.open(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
+        m = np.asarray(_img(pathlib.Path(cache) / "maps" / "37.png").convert("RGB"))
         assert tuple(m[350, 650]) == (10, 10, 250), m[350, 650]
 
 
