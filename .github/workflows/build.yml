@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Publish a release with this version tag, e.g. v1.3.0 (leave empty to only build)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -59,12 +64,16 @@ jobs:
 
       - name: Assemble the download
         shell: pwsh
+        env:
+          RELEASE_INPUT: ${{ github.event.inputs.release }}
         run: |
           $dst = "dist/WoWXE"
           Copy-Item -Recurse addon "$dst/addon"
           Copy-Item -Recurse assets "$dst/assets"
           Copy-Item WoWXE.icuewidget, README.md, LICENSE.md, CHANGELOG.md $dst
-          $name = if ($env:GITHUB_REF_TYPE -eq "tag") { "WoWXE-$env:GITHUB_REF_NAME" } else { "WoWXE-dev" }
+          $tag = if ($env:RELEASE_INPUT) { $env:RELEASE_INPUT } elseif ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME } else { "" }
+          $name = if ($tag) { "WoWXE-$tag" } else { "WoWXE-dev" }
+          "TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Append
           Compress-Archive -Path $dst -DestinationPath "$name.zip"
           "ZIP=$name.zip" | Out-File -FilePath $env:GITHUB_ENV -Append
 
@@ -74,10 +83,17 @@ jobs:
           path: ${{ env.ZIP }}
 
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.TAG != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: WoWXE ${{ env.TAG }}
           files: |
             ${{ env.ZIP }}
             WoWXE.icuewidget
+          body: |
+            **Download `WoWXE-${{ env.TAG }}.zip`**, unzip it anywhere, run **WoWXE.exe** (it offers to install the addon),
+            click **Start**, then import **WoWXE.icuewidget** in iCUE (size XL). WoW must run in Windowed (Fullscreen) mode.
+            See the [README](https://github.com/${{ github.repository }}#readme) and [CHANGELOG](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md).
           generate_release_notes: true

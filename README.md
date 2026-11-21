@@ -127,7 +127,7 @@ python companion/wowxe_companion.py --game-dir "C:\Games\World of Warcraft\_fore
 
 Tests (no WoW needed: the real addon runs against a stubbed WoW API): `pip install lupa numpy Pillow` then `python tests/test_pipeline.py`.
 Every push runs them on Windows and builds `WoWXE.exe` ([workflow](.github/workflows/build.yml)).
-Tagging `vX.Y.Z` publishes a release.
+Pushing a `vX.Y.Z` tag, or running the **Build** workflow with a version, publishes a release.
 
 ```
 WoWXE.pyw, launcher_core.py   launcher (and WoWXE.exe)
