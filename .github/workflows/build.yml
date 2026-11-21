@@ -43,6 +43,20 @@ jobs:
           --paths companion --hidden-import wowxe_companion --hidden-import casc --hidden-import pystray._win32
           WoWXE.pyw
 
+      - name: Smoke test WoWXE.exe (companion mode answers on its port)
+        shell: pwsh
+        run: |
+          $p = Start-Process dist/WoWXE/WoWXE.exe -ArgumentList "--companion","--port","8799","--cache","$env:RUNNER_TEMP\wowxe-cache" -PassThru
+          $ok = $false
+          foreach ($i in 1..30) {
+            Start-Sleep -Seconds 1
+            try { $r = Invoke-RestMethod http://127.0.0.1:8799/state.json -TimeoutSec 2; $ok = $true; break } catch { }
+          }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          if (-not $ok) { throw "WoWXE.exe --companion did not answer on port 8799" }
+          "companion version: $($r.versions.companion)  status: $($r.status)"
+          if (-not $r.versions.companion) { throw "no version in state.json" }
+
       - name: Assemble the download
         shell: pwsh
         run: |
